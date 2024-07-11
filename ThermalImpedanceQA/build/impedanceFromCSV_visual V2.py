@@ -8,6 +8,7 @@ import time
 global fileList
 global dirmemory
 global confirmToken
+global thisLocation
 
 fileList = []
 dirmemory = "/"
@@ -27,6 +28,9 @@ def browseFiles():
         filerev = filerev[filerev.find("/"):len(filerev)]
         dirmemory = filerev[::-1]
         directory.set(dirmemory + "/output")
+    
+    fileList = [os.path.relpath(file, thisLocation) for file in fileList]
+    print(fileList)
 
     #notification of action
     print("File explorer is open at location: " + dirmemory)
@@ -37,13 +41,12 @@ def analyze():
     if confirmToken:
         to_execute0, to_execute1 = parseVars()
 
-        starting_directory = "./"
-        print(starting_directory)
+        starting_directory = "./ThermalImpedanceQA"
 
         startTime = time.time()
 
         for i in fileList:
-            executable_command = to_execute0 + i + to_execute1
+            executable_command = to_execute0 + '"' + i + '"' + to_execute1
 
             fileName = i[::-1]
             fileName = fileName[0:fileName.find("/")]
@@ -80,8 +83,8 @@ def analyze():
         label_file_explorer.configure(text="Please confirm your settings first. ")
 
 def parseVars():
-    initialParams0 = ['python', './ThermalImpedanceQA/impedanceFromCSV.py']
-    initialParams1 = ["./npz-template.cfg", '--orientation']
+    initialParams0 = ['python', 'impedanceFromCSV.py']
+    initialParams1 = ['"./npz-template.cfg"', '--orientation']
     initialParams2 = ["-g", "--kill-shiny", "--nTrim",  "-d", "--adc", '-1f']
 
     match orientation.get():
@@ -106,7 +109,7 @@ def parseVars():
         initialParams2.remove("--adc")
 
     if not directory.get() == "./output":
-        initialParams1.extend(["-o", directory.get()])
+        initialParams1.extend(["-o", os.path.relpath(directory.get(), thisLocation)])
 
     if manualBoundaries.get():
         r_boundsFull = any(int(i.get()) != 0 for i in right_boundaries)

@@ -1,14 +1,14 @@
 import os
+import time
+import subprocess
 from tkinter import *
 from tkinter import filedialog
 from PIL import Image, ImageTk
-import subprocess
-import time
+from itertools import compress
 
 global fileList
 global dirmemory
 global confirmToken
-global thisLocation
 
 fileList = []
 dirmemory = "/"
@@ -23,36 +23,30 @@ def browseFiles():
 
     #use the name of the first file in the list to find the containing folder for all files in fileList
     if len(fileList) > 0:
-        file = fileList[0]
-        filerev = file[::-1]
-        filerev = filerev[filerev.find("/"):len(filerev)]
-        dirmemory = filerev[::-1]
+        dirmemory = os.path.commonpath([fileList[0], fileList[1]])
         directory.set(dirmemory + "/output")
-    
-    fileList = [os.path.relpath(file, thisLocation) for file in fileList]
+
+    print("files: ")
     print(fileList)
 
     #notification of action
     print("File explorer is open at location: " + dirmemory)
     label_file_explorer.configure(text= str(len(fileList)) + " Files Opened at: " + dirmemory)
-     
 
 def analyze():
-    if confirmToken:
+    if confirmToken and len(fileList) > 0:
         to_execute0, to_execute1 = parseVars()
-
         starting_directory = "./ThermalImpedanceQA"
-
         startTime = time.time()
+        numFiles = len(fileList)
+        average = 0
 
         for i in fileList:
+            startwatch = time.time()
             executable_command = to_execute0 + '"' + i + '"' + to_execute1
 
-            fileName = i[::-1]
-            fileName = fileName[0:fileName.find("/")]
-            fileName = fileName[::-1]
+            fileName = i[i.rindex("/"):]
 
-            print("Analyzing file: " + fileName)
             print("\nCOMMAND TO EXECUTE: ")
             print(executable_command + "\n")
 
@@ -72,83 +66,64 @@ def analyze():
                 print(output)
             else:
                 print(f"Error running Powershell command: {process.stderr.decode()}")
+            
+            average += (time.time() - startwatch)/numFiles
+
 
         timeElapsed = round(time.time() - startTime, 8)
         label_file_explorer.configure(text=
-                                      "All files done. Ready for next batch. Time elapsed: " + str(timeElapsed) + " seconds.")
+                                      "All files done and ready for next batch. Time elapsed: " + str(timeElapsed) + " seconds. Average time per file: " + str(average) + " seconds.")
         
         reenable()
 
-    else:
+    elif not confirmToken:
         label_file_explorer.configure(text="Please confirm your settings first. ")
+
+    elif not len(fileList) > 0:
+        label_file_explorer.configure(text="Please select some files to analyze!")
 
 def parseVars():
     initialParams0 = ['python', 'impedanceFromCSV.py']
-    initialParams1 = ['"./npz-template.cfg"', '--orientation']
-    initialParams2 = ["-g", "--kill-shiny", "--nTrim",  "-d", "--adc", '-1f']
+    initialParams1 = ['"../npz-template.cfg"']
+    initialParams2 = ["-g", "-1f", "-d", "--kill-shiny", "--adc"]
 
-    match orientation.get():
-        case 0:
-            initialParams1.remove('--orientation')
-        case 1:
-            initialParams1.append('L')
-        case 2:
-            initialParams1.append('J')
-        case 3:
-            initialParams1.append('K')
+    orientationMod = [[''], ['--orientation', 'L'], ['--orientation', 'J'], ['--orientation', 'K']]
+    initialParams1.extend(orientationMod[orientation.get()])
 
-    if not singleFace.get():
-        initialParams2.remove('-1f')
-    if not debug.get():
-        initialParams2.remove('-d')
-    if not killEmissivity.get():
-        initialParams2.remove("--kill-shiny")
-    if int(ntrim.get()) == 0:
-        initialParams2.remove("--nTrim")
-    if not adc.get():
-        initialParams2.remove("--adc")
+    if directory.get() != "./output":
+        initialParams1.extend(["-o", '"' + directory.get() + '"'])
 
-    if not directory.get() == "./output":
-        initialParams1.extend(["-o", os.path.relpath(directory.get(), thisLocation)])
+    if float(emissivity.get()) != 0.92:
+        initialParams1.extend(["--emissivity", str(emissivity.get())])
+
+    if float(ntrim.get()) != 0:
+        initialParams1.extend(["--nTrim", str(ntrim.get())])
+
+    boolParamsMod = [True, singleFace.get(), debug.get(), killEmissivity.get(), adc.get()]
+    initialParams2 = list(compress(initialParams2, boolParamsMod))
 
     if manualBoundaries.get():
-        r_boundsFull = any(int(i.get()) != 0 for i in right_boundaries)
-        l_boundsFull = any(int(i.get()) != 0 for i in left_boundaries)
-        if not r_boundsFull and not l_boundsFull:
-            label_file_explorer.configure(text=
-                                          "Error. Please enter manual bounds or deselect 'manual bounds' option.")
-            return
-        elif r_boundsFull and l_boundsFull:
-            if singleFace.get():
-                label_file_explorer.configure(text=
-                                              "Error. Please delete one set of boundaries or deselect the 'single face' option.")
-                return
-            else:
-                bounds = right_boundaries + left_boundaries
-        elif r_boundsFull != l_boundsFull:
-            if not singleFace.get():
-                label_file_explorer.configure(text=
-                                              "Error. Please enter both sets of boundaries for a double-side configuration.")
-                return
-            elif singleFace.get() and r_boundsFull:
-                bounds = right_boundaries
-            elif singleFace.get() and l_boundsFull:
-                bounds = left_boundaries
+        r_boundsFull = any(float(i.get()) != 0 for i in right_boundaries)
+        l_boundsFull = any(float(i.get()) != 0 for i in left_boundaries)
+        
+        if not singleFace.get():
+            bounds = right_boundaries + left_boundaries
+        elif r_boundsFull:
+            bounds = right_boundaries
+        elif l_boundsFull:
+            bounds = left_boundaries
 
         boundaries = ' '.join([i.get() for i in bounds])
 
         initialParams1.extend(["--manual_boundaries", boundaries])
-
-    if not float(emissivity.get()) == 0.92:
-        initialParams1.extend(["--emissivity", str(float(emissivity.get()))])
 
     initialParams1 = initialParams1 + initialParams2
 
     to_execute0 = ' ' + ' '.join([str(i) for i in initialParams0]) + ' '
     to_execute1 = ' ' + ' '.join([str(i) for i in initialParams1])
 
-    print(initialParams0, initialParams1)
-    print(to_execute0, to_execute1)
+    #print(initialParams0, initialParams1)
+    #print(to_execute0, to_execute1)
 
     return to_execute0, to_execute1
 
@@ -162,7 +137,7 @@ def reenable():
                 widget.configure(state='normal')
             else:
                 widget.configure(state='active')
-        enabledList.append(widget)
+            enabledList.append(widget)
 
     trim_label.configure(fg="black")
     enabledList.append(trim_label)
@@ -193,7 +168,7 @@ def confirm():
         except:
             label_file_explorer.configure(text=
                                           "Please ensure the specified output path is a viable filepath.")
-            print("Error. Outpath not creatable. ")
+            print("Error. Output path invalid. ")
             return
 
     if manualBoundaries.get():
@@ -205,12 +180,35 @@ def confirm():
                                             "Please ensure all manual boundaries entered are numerical values.")
                 print("Error: Non-numerical boundary value detected.")
                 return
+            
+        r_boundsFull = any(float(i.get()) != 0 for i in right_boundaries)
+        l_boundsFull = any(float(i.get()) != 0 for i in left_boundaries)
+        
+        if not r_boundsFull and not l_boundsFull:
+            label_file_explorer.configure(text=
+                                          "Error. Please enter manual bounds or deselect 'manual bounds' option.")
+            return
+        elif r_boundsFull and l_boundsFull and singleFace.get():
+                label_file_explorer.configure(text=
+                                              "Error. Please delete one set of boundaries or deselect the 'single face' option.")
+                return
+        elif r_boundsFull != l_boundsFull and not singleFace.get():
+                label_file_explorer.configure(text=
+                                              "Error. Please enter both sets of boundaries for a double-side configuration.")
+                return
                 
     try:
         float(emissivity.get())
     except:
         label_file_explorer.configure(text="Please ensure emissivity value is numerical.")
         print("Error: Non-numerical emissivity value detected.")
+        return
+    
+    try:
+        float(ntrim.get())
+    except:
+        label_file_explorer.configure(text="Please ensure nTrim value is numerical.")
+        print("Error: Non-numerical nTrim value detected.")
         return
     
     label_file_explorer.configure(text="All argument variables confirmed and locked in. ")
@@ -221,6 +219,7 @@ def confirm():
 
 def reset():
     global confirmToken
+    global fileList
 
     reenable()
 
@@ -237,6 +236,7 @@ def reset():
         right_boundaries[i].set(value='0')
 
     confirmToken = False
+    fileList = []
 
 #######################################################################
 #TKINTER STUFF BELOW

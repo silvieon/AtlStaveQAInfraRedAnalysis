@@ -153,6 +153,8 @@ def reenable():
     widgetList = borders_frame.winfo_children() + trim_frame.winfo_children() + orientation_frame.winfo_children() + emissivity_frame.winfo_children()
     enabledList = []
 
+    analyze_button.configure(bg = 'dark red')
+
     for widget in widgetList:
         if not type(widget) in [Label, LabelFrame, Frame]:
             if type(widget) == Entry:
@@ -169,6 +171,8 @@ def reenable():
 def disable():
     widgetList = borders_frame.winfo_children() + trim_frame.winfo_children() + orientation_frame.winfo_children() + emissivity_frame.winfo_children()
     disabledList = []
+
+    analyze_button.configure(bg='dark green')
 
     for widget in widgetList:
         if not type(widget) in [Label, LabelFrame, Frame]:
@@ -290,7 +294,6 @@ button_orientation_L = Radiobutton(orientation_frame, text="L-side", value=1, va
 button_orientation_J = Radiobutton(orientation_frame, text="J-side", value=2, var=orientation, width=10, height=1)
 button_orientation_K = Radiobutton(orientation_frame, text="K-side", value=3, var=orientation, width=10, height=1)
 button_singleFace = Checkbutton(orientation_frame, text="Single face?", var=singleFace, width=20, height=1)
-button_confirmOrientation = Button(orientation_frame, text="Confirm", command = confirm, width=10, height=1)
 
 borders_frame=LabelFrame(root, text="Boundaries", width=1000, height=1200)
 button_manual_boundaries = Checkbutton(borders_frame, text="use manual boundaries", width=20, height=1, var=manualBoundaries)
@@ -311,8 +314,8 @@ trim_label = Label(trim_frame, text = "nTrim parameter", width=20, height=1)
 trim_label.pack(side=LEFT)
 n_trim.pack(side=LEFT)
 
-pictures = [ImageTk.PhotoImage(Image.open('ThermalImpedanceQA/build/assets/PXL_20240628_200320287.jpg').resize([80,160])), 
-            ImageTk.PhotoImage(Image.open('ThermalImpedanceQA/build/assets/PXL_20240628_200312264.jpg').resize([80,160]))]
+pictures = [ImageTk.PhotoImage(Image.open(r'AtlStaveQAInfraRedAnalysis\ThermalImpedanceQA\build\assets\PXL_20240628_200320287.jpg').resize([80,160])), 
+            ImageTk.PhotoImage(Image.open(r'AtlStaveQAInfraRedAnalysis\ThermalImpedanceQA\build\assets\PXL_20240628_200312264.jpg').resize([80,160]))]
 
 RightSide_label = Label(borders_frame, image= pictures[0], width=100, height=175)
 LeftSide_label = Label(borders_frame, image= pictures[1], width=100, height=175)
@@ -328,7 +331,9 @@ button_normalize = Checkbutton(emissivity_frame, text="Normalize shininess", var
 textbox_emissivity = Entry(emissivity_frame, textvariable = emissivity, width=20)
 button_adc = Checkbutton(emissivity_frame, text="ADC variables", var = adc, width=20, height=1)
 
-analyze_button = Button(root, text="Analyze!", width=20, height=10, command=analyze, bg="dark green", fg="light grey")
+processes_frame = Frame(root)
+confirm_button = Button(processes_frame, text="Confirm Args", width=20,height=5, command = confirm, bg='dark orange')
+analyze_button = Button(processes_frame, text="Analyze!", width=20, height=5, command=analyze, bg="dark red", fg="light grey")
 
 label_file_explorer.grid(column=1, columnspan=5, row=1, sticky=W)
 
@@ -345,7 +350,6 @@ button_orientation_L.pack(side=TOP, pady=[10,0])
 button_orientation_J.pack(side=TOP)
 button_orientation_K.pack(side=TOP)
 button_singleFace.pack(side=TOP)
-button_confirmOrientation.pack(side=TOP, pady=[0,10])
 
 emissivity_frame.grid(column=2, row=3, sticky=N)
 button_normalize.pack(side=TOP, pady=[10,0])
@@ -367,6 +371,8 @@ RightSide_top.grid(column=6, row=2)
 RightSide_bottom.grid(column=6, row=8, pady=[0,10])
 trim_frame.grid(column=3, row=8)
 
-analyze_button.grid(column=2, row=5, sticky=N)
+processes_frame.grid(column=2, row=5, sticky=N)
+confirm_button.pack(side=TOP)
+analyze_button.pack(side=TOP)
 
 root.mainloop()

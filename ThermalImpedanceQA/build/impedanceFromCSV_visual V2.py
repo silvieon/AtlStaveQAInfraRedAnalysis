@@ -69,8 +69,8 @@ def analyze():
             
             average += (time.time() - startwatch)/numFiles
 
-
-        timeElapsed = round(time.time() - startTime, 8)
+        average = round(average, 3)
+        timeElapsed = round(time.time() - startTime, 3)
         label_file_explorer.configure(text=
                                       "All files done and ready for next batch. Time elapsed: " + str(timeElapsed) + " seconds. Average time per file: " + str(average) + " seconds.")
         

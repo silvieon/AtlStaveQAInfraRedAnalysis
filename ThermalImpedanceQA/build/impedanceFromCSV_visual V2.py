@@ -128,29 +128,32 @@ def parseVars():
     return to_execute0, to_execute1
 
 def reenable():
-    widgetList = borders_frame.winfo_children() + trim_frame.winfo_children() + orientation_frame.winfo_children() + emissivity_frame.winfo_children()
+    widgetList = borders_frame.winfo_children() + trim_frame.winfo_children() + orientation_frame.winfo_children() + emissivity_frame.winfo_children() + [textbox_outpath, label_outpath, button_debug, textbox_emissivity]
     enabledList = []
 
-    analyze_button.configure(bg = 'dark red')
+    analyze_button.configure(bg='dark slate gray', relief=SUNKEN, state='disabled')
+    confirm_button.configure(bg='orange red',relief=RAISED, state='normal')
 
     for widget in widgetList:
         if not type(widget) in [Label, LabelFrame, Frame]:
-            if type(widget) == Entry:
-                widget.configure(state='normal')
-            else:
-                widget.configure(state='active')
-            enabledList.append(widget)
+            widget.configure(state='normal')
+            print(widget.widgetName + " back online. ")
+        enabledList.append(widget)
 
     trim_label.configure(fg="black")
-    enabledList.append(trim_label)
+    label_emissivity.configure(fg="black")
+    label_outpath.configure(fg='black')
+
+    print("\nSuccessfully reset. \n")
 
     return enabledList
 
 def disable():
-    widgetList = borders_frame.winfo_children() + trim_frame.winfo_children() + orientation_frame.winfo_children() + emissivity_frame.winfo_children()
+    widgetList = borders_frame.winfo_children() + trim_frame.winfo_children() + orientation_frame.winfo_children() + emissivity_frame.winfo_children() + [textbox_outpath, label_outpath, button_debug, textbox_emissivity]
     disabledList = []
 
-    analyze_button.configure(bg='dark green')
+    analyze_button.configure(bg='dark green', relief=RAISED, state='normal')
+    confirm_button.configure(bg='coral4',relief=SUNKEN, state='disabled')
 
     for widget in widgetList:
         if not type(widget) in [Label, LabelFrame, Frame]:
@@ -159,7 +162,10 @@ def disable():
             disabledList.append(widget)
 
     trim_label.configure(fg="grey")
-    disabledList.append(trim_label)
+    label_emissivity.configure(fg="grey")
+    label_outpath.configure(fg='grey')
+
+    print("\nReady to analyze. \n")
 
     return disabledList
 
@@ -215,7 +221,7 @@ def confirm():
         print("Error: Non-numerical nTrim value detected.")
         return
     
-    label_file_explorer.configure(text="All argument variables confirmed and locked in. ")
+    label_file_explorer.configure(text="Argument variables successfully confirmed and locked in. ")
     
     disable()
 
@@ -235,6 +241,8 @@ def reset():
     manualBoundaries.set(value=False)
     ntrim.set(value='0')
     adc.set(value=False)
+    directory.set(value='\\')
+    
     for i in range(4):
         left_boundaries[i].set(value='0')
         right_boundaries[i].set(value='0')
@@ -247,15 +255,10 @@ def reset():
 
 root = Tk()
 #getting screen width and height of display
-width= root.winfo_screenwidth() 
-height= root.winfo_screenheight()
+width= 1200
+height= 500
 #setting tkinter window size
 root.geometry("%dx%d" % (width, height))
-
-for i in range(5):
-    root.columnconfigure(i, weight=1)
-for j in range(10):
-    root.rowconfigure(j, weight=1)
 
 ###################################################################
 #TKINTER VARIABLES
@@ -284,7 +287,9 @@ right_boundaries = [StringVar(value="0") for i in range(4)]
 
 label_file_explorer = Label(root, height=1, width = 100, text="Batch Calculate Impedance for Thermal QC.", foreground="blue")
 
-controls_frame=LabelFrame(root, text="Controls")
+organization_frame = Frame(root)
+
+controls_frame=LabelFrame(organization_frame, text="Controls")
 button_explore = Button(controls_frame, text = "Browse Files", command = browseFiles, width=10, height=1, cursor= "hand2")
 label_outpath = Label(controls_frame, text="Files writing to:", width=20, height=1)
 textbox_outpath = Entry(controls_frame, textvariable = directory, width=20)
@@ -292,13 +297,13 @@ button_debug = Checkbutton(controls_frame, text="Run in debug mode", var=debug, 
 button_reset = Button(controls_frame, text = "Reset", command=reset, width=10, height=1, cursor = "hand2")
 button_exit = Button(controls_frame, text = "Exit", command = exit, width=10, height=1, cursor= "hand2")
 
-orientation_frame = LabelFrame(root, text="Orientation")
-button_orientation_L = Radiobutton(orientation_frame, text="L-side", value=1, var=orientation, width=10, height=1)
-button_orientation_J = Radiobutton(orientation_frame, text="J-side", value=2, var=orientation, width=10, height=1)
-button_orientation_K = Radiobutton(orientation_frame, text="K-side", value=3, var=orientation, width=10, height=1)
-button_singleFace = Checkbutton(orientation_frame, text="Single face?", var=singleFace, width=20, height=1)
+orientation_frame = LabelFrame(organization_frame, text="Orientation")
+button_orientation_L = Radiobutton(orientation_frame, text="L-side", value=1, var=orientation, height=1)
+button_orientation_J = Radiobutton(orientation_frame, text="J-side", value=2, var=orientation, height=1)
+button_orientation_K = Radiobutton(orientation_frame, text="K-side", value=3, var=orientation, height=1)
+button_singleFace = Checkbutton(orientation_frame, text="Single face", var=singleFace, height=1)
 
-borders_frame=LabelFrame(root, text="Boundaries", width=1000, height=1200)
+borders_frame=LabelFrame(organization_frame, text="Boundaries", width=1000, height=1200)
 button_manual_boundaries = Checkbutton(borders_frame, text="use manual boundaries", width=20, height=1, var=manualBoundaries)
 
 LeftSide_left = Entry(borders_frame, textvariable=left_boundaries[0], width=4)
@@ -313,53 +318,61 @@ RightSide_bottom = Entry(borders_frame, textvariable=right_boundaries[3], width=
 
 trim_frame = Frame(borders_frame)
 n_trim = Entry(trim_frame, textvariable = ntrim, width=4)
-trim_label = Label(trim_frame, text = "nTrim parameter", width=20, height=1)
-trim_label.pack(side=LEFT)
-n_trim.pack(side=LEFT)
+trim_label = Label(trim_frame, text = "nTrim parameter", height=1)
+trim_label.grid(column=0,padx=[0,5], row=0, sticky=E)
+n_trim.grid(column=1,padx=[5,0],row=0, sticky=W)
 
-pictures = [ImageTk.PhotoImage(Image.open(r'AtlStaveQAInfraRedAnalysis\ThermalImpedanceQA\build\assets\PXL_20240628_200320287.jpg').resize([80,160])), 
-            ImageTk.PhotoImage(Image.open(r'AtlStaveQAInfraRedAnalysis\ThermalImpedanceQA\build\assets\PXL_20240628_200312264.jpg').resize([80,160]))]
+pictures = [ImageTk.PhotoImage(Image.open(r'ThermalImpedanceQA\build\assets\PXL_20240628_200312264.jpg').resize([80,160])), 
+            ImageTk.PhotoImage(Image.open(r'ThermalImpedanceQA\build\assets\PXL_20240628_200312264.jpg').resize([80,160]))]
 
 RightSide_label = Label(borders_frame, image= pictures[0], width=100, height=175)
 LeftSide_label = Label(borders_frame, image= pictures[1], width=100, height=175)
-
-weights = [2,2,2,1,2,2,2]
 for i in range(7):
     borders_frame.columnconfigure(i)
 for j in range(7):
     borders_frame.rowconfigure(j)
 
-emissivity_frame = LabelFrame(root, text="Emissivity")
-button_normalize = Checkbutton(emissivity_frame, text="Normalize shininess", var = killEmissivity, width=20, height=1)
-textbox_emissivity = Entry(emissivity_frame, textvariable = emissivity, width=20)
-button_adc = Checkbutton(emissivity_frame, text="ADC variables", var = adc, width=20, height=1)
+for i in range(5):
+    organization_frame.columnconfigure(i)
 
-processes_frame = Frame(root)
-confirm_button = Button(processes_frame, text="Confirm Args", width=20,height=5, command = confirm, bg='dark orange')
-analyze_button = Button(processes_frame, text="Analyze!", width=20, height=5, command=analyze, bg="dark red", fg="light grey")
+emissivity_frame = LabelFrame(organization_frame, text="Emissivity")
+button_normalize = Checkbutton(emissivity_frame, text="Normalize shininess", var = killEmissivity, height=1)
+emissivity_val_frame = Frame(emissivity_frame)
+textbox_emissivity = Entry(emissivity_val_frame, textvariable = emissivity, width=5)
+label_emissivity = Label(emissivity_val_frame, text='Emissivity value: ')
+button_adc = Checkbutton(emissivity_frame, text="ADC variables", var = adc, height=1)
 
-label_file_explorer.grid(column=1, columnspan=5, row=1, sticky=W)
+processes_frame = Frame(organization_frame)
+confirm_button = Button(processes_frame, text="Confirm Arguments", width=20,height=8, command = confirm, bg='orange red')
+analyze_button = Button(processes_frame, text="Analyze!", width=20, height=8, command=analyze, bg="dark slate gray", fg='white', relief=SUNKEN, state='disabled')
 
-controls_frame.grid(column=1, row=2, sticky=N)
-button_explore.pack(side=TOP, pady=[10,0])
+label_file_explorer.pack(side=TOP, pady=[70,40])
+
+organization_frame.pack(side=TOP)
+
+controls_frame.grid(column=1, row=1, rowspan=2, sticky=E, padx=[0,5])
+button_explore.pack(side=TOP, pady=[20,0])
+button_reset.pack(side=TOP, pady=[0,5])
 label_outpath.pack(side=TOP)
-textbox_outpath.pack(side=TOP, pady=3)
-button_debug.pack(side=TOP)
-button_reset.pack(side=TOP)
-button_exit.pack(side=TOP, pady=[0,10])
+textbox_outpath.pack(side=TOP, pady=5)
+button_debug.pack(side=TOP, pady=[0,5])
+button_exit.pack(side=TOP, pady=[0,69])
 
-orientation_frame.grid(column=2, row=2, sticky=N)
-button_orientation_L.pack(side=TOP, pady=[10,0])
-button_orientation_J.pack(side=TOP)
-button_orientation_K.pack(side=TOP)
-button_singleFace.pack(side=TOP)
+orientation_frame.grid(column=2, row=1, sticky=S, padx=[5,5], pady=[0,5])
+button_orientation_L.grid(row=0, pady=[10,0], sticky=W, padx=[30,76])
+button_orientation_J.grid(row=1, sticky=W, padx=[30,75])
+button_orientation_K.grid(row=2, sticky=W, padx=[30,75])
+button_singleFace.grid(row=3, sticky=W, pady=[0,17], padx=[30,0])
 
-emissivity_frame.grid(column=2, row=3, sticky=N)
-button_normalize.pack(side=TOP, pady=[10,0])
-textbox_emissivity.pack(side=TOP)
-button_adc.pack(side=TOP, pady=[0,10])
+emissivity_frame.grid(column=2, row=2, sticky=N, padx=[5,5], pady=[5,0])
+emissivity_val_frame.grid(row=0, pady=[10,0])
+button_normalize.grid(row=1, sticky=W, padx=[15,19])
+button_adc.grid(row=2, pady=[0,15], sticky=W, padx=[15,0])
 
-borders_frame.grid(column=3, row=2, columnspan=4, rowspan=5, sticky=NW)
+label_emissivity.pack(side=LEFT)
+textbox_emissivity.pack(side=LEFT)
+
+borders_frame.grid(column=3, row=1, columnspan=4, rowspan=2, sticky=W, padx=[5,5])
 button_manual_boundaries.grid(column=3, row=0, columnspan=3)
 LeftSide_label.grid(column=1, row=3, rowspan=4)
 RightSide_label.grid(column=6, row=3, rowspan=4)
@@ -374,8 +387,8 @@ RightSide_top.grid(column=6, row=2)
 RightSide_bottom.grid(column=6, row=8, pady=[0,10])
 trim_frame.grid(column=3, row=8)
 
-processes_frame.grid(column=2, row=5, sticky=N)
-confirm_button.pack(side=TOP)
-analyze_button.pack(side=TOP)
+processes_frame.grid(column=7, row=1, rowspan=2, sticky=W, padx=[5,0])
+confirm_button.pack(side=TOP, pady=[5,0])
+analyze_button.pack(side=TOP, pady=[0,0])
 
 root.mainloop()

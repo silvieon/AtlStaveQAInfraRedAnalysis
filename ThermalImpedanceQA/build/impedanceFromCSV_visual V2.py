@@ -24,7 +24,7 @@ def browseFiles():
     #use the name of the first file in the list to find the containing folder for all files in fileList
     if len(fileList) > 0:
         dirmemory = os.path.commonpath([fileList[0], fileList[1]])
-        directory.set(dirmemory + "/output")
+        directory.set(dirmemory + "\\output\\")
 
     print("files: \n")
     print(str(fileList).replace(" ","\n\n"))

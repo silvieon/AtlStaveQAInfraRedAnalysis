@@ -27,7 +27,7 @@ def browseFiles():
         directory.set(dirmemory + "/output")
 
     print("files: ")
-    print(fileList)
+    print(str(fileList).replace(" ","\n"))
 
     #notification of action
     print("File explorer is open at location: " + dirmemory)

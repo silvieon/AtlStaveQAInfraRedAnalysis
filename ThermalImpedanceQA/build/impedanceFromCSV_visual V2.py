@@ -26,8 +26,8 @@ def browseFiles():
         dirmemory = os.path.commonpath([fileList[0], fileList[1]])
         directory.set(dirmemory + "/output")
 
-    print("files: ")
-    print(fileList)
+    print("files: \n")
+    print(str(fileList).replace(" ","\n\n"))
 
     #notification of action
     print("File explorer is open at location: " + dirmemory)
@@ -322,8 +322,8 @@ trim_label = Label(trim_frame, text = "nTrim parameter", height=1)
 trim_label.grid(column=0,padx=[0,5], row=0, sticky=E)
 n_trim.grid(column=1,padx=[5,0],row=0, sticky=W)
 
-pictures = [ImageTk.PhotoImage(Image.open(r'ThermalImpedanceQA\build\assets\PXL_20240628_200312264.jpg').resize([80,160])), 
-            ImageTk.PhotoImage(Image.open(r'ThermalImpedanceQA\build\assets\PXL_20240628_200312264.jpg').resize([80,160]))]
+pictures = [ImageTk.PhotoImage(Image.open(r'AtlStaveQAInfraRedAnalysis\ThermalImpedanceQA\build\assets\PXL_20240628_200312264.jpg').resize([80,160])), 
+            ImageTk.PhotoImage(Image.open(r'AtlStaveQAInfraRedAnalysis\ThermalImpedanceQA\build\assets\PXL_20240628_200312264.jpg').resize([80,160]))]
 
 RightSide_label = Label(borders_frame, image= pictures[0], width=100, height=175)
 LeftSide_label = Label(borders_frame, image= pictures[1], width=100, height=175)

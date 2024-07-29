@@ -24,7 +24,7 @@ def browseFiles():
     #use the name of the first file in the list to find the containing folder for all files in fileList
     if len(fileList) > 0:
         dirmemory = os.path.commonpath([fileList[0], fileList[1]])
-        directory.set(dirmemory + "\\output\\")
+        directory.set(dirmemory + "\\output")
 
     print("files: \n")
     print(str(fileList).replace(" ","\n\n"))
@@ -36,7 +36,7 @@ def browseFiles():
 def analyze():
     if confirmToken and len(fileList) > 0:
         to_execute0, to_execute1 = parseVars()
-        starting_directory = "./ThermalImpedanceQA"
+        starting_directory = r"C:\Users\ATLAS STAVE QC\Desktop\Thermal Analysis\AtlStaveQAInfraRedAnalysis\ThermalImpedanceQA" #starting directory SPECIFICALLY FOR THERMAL COMPUTER IN LAB
         startTime = time.time()
         numFiles = len(fileList)
         average = 0

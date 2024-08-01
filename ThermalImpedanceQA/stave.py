@@ -26,7 +26,7 @@ class Stave:
     self.__yBottom = 0
     self.__regions = {} # dictionary
     self.__staveRatio = 11.957 #length:width ratio for sanity check
-    #self.__staveRatioTolerance = 0.07 # 7% tolerance on the stave length/width ratio
+    self.__staveRatioTolerance = 0.07 # 7% tolerance on the stave length/width ratio
     self.__staveRatioTolerance = 1 #TEMPORARY TOLERANCE TO TEST NEW WL DRYBOX. DO NOT USE FOR ACTUAL TESTS.
     self.__lineThickness = 1 #thickness of the line that is used for drawing the regions
     self.__staveEndTolerance = 1.e-6 # tolerance for horizontal ends of stave
